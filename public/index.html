@@ -52,10 +52,20 @@
       border: 1px solid #21262d;
       overflow: hidden;
     }
-    .card-title {
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
       padding: 16px 20px 0;
+    }
+    .card-title {
       font-size: 16px;
       font-weight: 600;
+    }
+    .card-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: #3fb950;
     }
     .card-subtitle {
       padding: 2px 20px 8px;
@@ -88,22 +98,34 @@
 
   <div class="dashboard" id="dashboard">
     <div class="card">
-      <div class="card-title">Bitcoin / USD</div>
+      <div class="card-header">
+        <div class="card-title">Bitcoin / USD</div>
+        <div class="card-price" id="price-btc">--</div>
+      </div>
       <div class="card-subtitle">BITSTAMP:BTCUSD</div>
       <div class="chart-wrap" id="chart-btc"></div>
     </div>
     <div class="card">
-      <div class="card-title">Vanguard Total World Stock ETF</div>
+      <div class="card-header">
+        <div class="card-title">Vanguard Total World Stock ETF</div>
+        <div class="card-price" id="price-vt">--</div>
+      </div>
       <div class="card-subtitle">AMEX:VT</div>
       <div class="chart-wrap" id="chart-vt"></div>
     </div>
     <div class="card">
-      <div class="card-title">S&P 500</div>
+      <div class="card-header">
+        <div class="card-title">S&P 500</div>
+        <div class="card-price" id="price-sp500">--</div>
+      </div>
       <div class="card-subtitle">SP:SPX</div>
       <div class="chart-wrap" id="chart-sp500"></div>
     </div>
     <div class="card">
-      <div class="card-title">Gold / USD</div>
+      <div class="card-header">
+        <div class="card-title">Gold / USD</div>
+        <div class="card-price" id="price-gold">--</div>
+      </div>
       <div class="card-subtitle">OANDA:XAUUSD</div>
       <div class="chart-wrap" id="chart-gold"></div>
     </div>
@@ -201,6 +223,21 @@
     });
 
     renderCharts();
+
+    // Fetch live prices from server proxy
+    async function loadPrices() {
+      try {
+        const res = await fetch('/api/prices');
+        const data = await res.json();
+        if (data.BTC) document.getElementById('price-btc').textContent = '$' + Math.round(data.BTC).toLocaleString();
+        if (data.VT) document.getElementById('price-vt').textContent = '$' + Number(data.VT).toFixed(2);
+        if (data.SP500) document.getElementById('price-sp500').textContent = '$' + Number(data.SP500).toFixed(2);
+        if (data.GOLD) document.getElementById('price-gold').textContent = '$' + Number(data.GOLD).toFixed(2);
+      } catch (e) {
+        console.error('Price fetch failed:', e);
+      }
+    }
+    loadPrices();
   </script>
 </body>
 </html>
