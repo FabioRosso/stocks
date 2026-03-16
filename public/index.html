@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stock Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -15,16 +13,13 @@
       min-height: 100vh;
     }
     header {
-      padding: 24px 32px;
+      padding: 24px 32px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #21262d;
     }
-    header h1 {
-      font-size: 24px;
-      font-weight: 600;
-    }
+    header h1 { font-size: 24px; font-weight: 600; }
     .time-controls {
       display: flex;
       gap: 6px;
@@ -44,10 +39,7 @@
       transition: all 0.2s;
     }
     .time-btn:hover { color: #e1e4e8; }
-    .time-btn.active {
-      background: #238636;
-      color: #fff;
-    }
+    .time-btn.active { background: #238636; color: #fff; }
     .dashboard {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -58,56 +50,20 @@
       background: #161b22;
       border-radius: 12px;
       border: 1px solid #21262d;
-      padding: 20px;
-      position: relative;
-    }
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 16px;
+      overflow: hidden;
     }
     .card-title {
-      font-size: 18px;
+      padding: 16px 20px 0;
+      font-size: 16px;
       font-weight: 600;
     }
-    .card-price {
-      font-size: 22px;
-      font-weight: 700;
-    }
-    .card-change {
-      font-size: 14px;
-      margin-left: 8px;
-    }
-    .positive { color: #3fb950; }
-    .negative { color: #f85149; }
-    .chart-container {
-      position: relative;
-      height: 250px;
-    }
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(22, 27, 34, 0.8);
-      border-radius: 12px;
-      z-index: 10;
-    }
-    .spinner {
-      width: 32px; height: 32px;
-      border: 3px solid #21262d;
-      border-top-color: #238636;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .last-updated {
-      text-align: center;
-      padding: 16px;
+    .card-subtitle {
+      padding: 2px 20px 8px;
+      font-size: 12px;
       color: #484f58;
-      font-size: 13px;
+    }
+    .chart-wrap {
+      height: 320px;
     }
     @media (max-width: 768px) {
       .dashboard { grid-template-columns: 1fr; }
@@ -118,191 +74,133 @@
 <body>
   <header>
     <h1>Stock Dashboard</h1>
-    <div class="time-controls">
-      <button class="time-btn" data-range="1d" data-interval="5m">1D</button>
-      <button class="time-btn" data-range="5d" data-interval="15m">1W</button>
-      <button class="time-btn active" data-range="1mo" data-interval="1d">1M</button>
-      <button class="time-btn" data-range="3mo" data-interval="1d">3M</button>
-      <button class="time-btn" data-range="6mo" data-interval="1d">6M</button>
-      <button class="time-btn" data-range="1y" data-interval="1wk">1Y</button>
-      <button class="time-btn" data-range="5y" data-interval="1mo">5Y</button>
+    <div class="time-controls" id="timeControls">
+      <button class="time-btn" data-range="1D">1D</button>
+      <button class="time-btn" data-range="1W">1W</button>
+      <button class="time-btn active" data-range="1M">1M</button>
+      <button class="time-btn" data-range="3M">3M</button>
+      <button class="time-btn" data-range="6M">6M</button>
+      <button class="time-btn" data-range="1Y">1Y</button>
+      <button class="time-btn" data-range="5Y">5Y</button>
+      <button class="time-btn" data-range="ALL">ALL</button>
     </div>
   </header>
 
-  <div class="dashboard" id="dashboard"></div>
-  <div class="last-updated" id="lastUpdated"></div>
+  <div class="dashboard" id="dashboard">
+    <div class="card">
+      <div class="card-title">Bitcoin / USD</div>
+      <div class="card-subtitle">BITSTAMP:BTCUSD</div>
+      <div class="chart-wrap" id="chart-btc"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Vanguard Total World Stock ETF</div>
+      <div class="card-subtitle">AMEX:VT</div>
+      <div class="chart-wrap" id="chart-vt"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">S&P 500</div>
+      <div class="card-subtitle">SP:SPX</div>
+      <div class="chart-wrap" id="chart-sp500"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Gold / USD</div>
+      <div class="card-subtitle">OANDA:XAUUSD</div>
+      <div class="chart-wrap" id="chart-gold"></div>
+    </div>
+  </div>
 
   <script>
-    const STOCKS = [
-      { symbol: 'BTC-USD', name: 'Bitcoin / USD', color: '#f7931a' },
-      { symbol: 'VT', name: 'Vanguard Total World Stock ETF', color: '#3b82f6' },
-      { symbol: '^GSPC', name: 'S&P 500', color: '#8b5cf6' },
-      { symbol: 'GC=F', name: 'Gold / USD', color: '#eab308' }
+    const CHARTS = [
+      { containerId: 'chart-btc', symbol: 'BITSTAMP:BTCUSD' },
+      { containerId: 'chart-vt', symbol: 'AMEX:VT' },
+      { containerId: 'chart-sp500', symbol: 'SP:SPX' },
+      { containerId: 'chart-gold', symbol: 'OANDA:XAUUSD' }
     ];
 
-    const charts = {};
-    let currentRange = '1mo';
-    let currentInterval = '1d';
+    let currentRange = '1M';
 
-    function createCards() {
-      const dashboard = document.getElementById('dashboard');
-      dashboard.innerHTML = STOCKS.map(s => `
-        <div class="card" id="card-${CSS.escape(s.symbol)}">
-          <div class="loading-overlay" id="loader-${CSS.escape(s.symbol)}">
-            <div class="spinner"></div>
-          </div>
-          <div class="card-header">
-            <div>
-              <div class="card-title">${s.name}</div>
-              <div style="color:#484f58;font-size:13px">${s.symbol}</div>
-            </div>
-            <div style="text-align:right">
-              <span class="card-price" id="price-${CSS.escape(s.symbol)}">--</span>
-              <span class="card-change" id="change-${CSS.escape(s.symbol)}"></span>
-            </div>
-          </div>
-          <div class="chart-container">
-            <canvas id="chart-${CSS.escape(s.symbol)}"></canvas>
-          </div>
-        </div>
-      `).join('');
+    function getIntervalForRange(range) {
+      const map = {
+        '1D': '5',
+        '1W': '15',
+        '1M': 'D',
+        '3M': 'D',
+        '6M': 'W',
+        '1Y': 'W',
+        '5Y': 'M',
+        'ALL': 'M'
+      };
+      return map[range] || 'D';
     }
 
-    async function fetchData(symbol, range, interval) {
-      const res = await fetch(`/api/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`);
-      const json = await res.json();
-      const result = json.chart.result[0];
-      const timestamps = result.timestamp;
-      const closes = result.indicators.quote[0].close;
-      const meta = result.meta;
-      return { timestamps, closes, meta };
+    function getRangeValue(range) {
+      const map = {
+        '1D': '1D',
+        '1W': '5D',
+        '1M': '1M',
+        '3M': '3M',
+        '6M': '6M',
+        '1Y': '12M',
+        '5Y': '60M',
+        'ALL': 'ALL'
+      };
+      return map[range] || '1M';
     }
 
-    function formatPrice(price, symbol) {
-      if (price == null) return '--';
-      if (symbol === 'BTC-USD') return '$' + price.toLocaleString('en-US', { maximumFractionDigits: 0 });
-      return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+    function renderCharts() {
+      CHARTS.forEach(chart => {
+        const container = document.getElementById(chart.containerId);
+        container.innerHTML = '';
 
-    function renderChart(stock, data) {
-      const id = CSS.escape(stock.symbol);
-      const canvas = document.getElementById(`chart-${id}`);
+        const widgetConfig = {
+          autosize: true,
+          symbol: chart.symbol,
+          interval: getIntervalForRange(currentRange),
+          range: getRangeValue(currentRange),
+          timezone: 'Etc/UTC',
+          theme: 'dark',
+          style: '3',
+          locale: 'en',
+          backgroundColor: '#161b22',
+          gridColor: '#21262d',
+          hide_top_toolbar: true,
+          hide_legend: false,
+          save_image: false,
+          hide_volume: true,
+          allow_symbol_change: false
+        };
 
-      const points = data.timestamps
-        .map((t, i) => ({ x: t * 1000, y: data.closes[i] }))
-        .filter(p => p.y != null);
+        const script = document.createElement('script');
+        script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+        script.type = 'text/javascript';
+        script.async = true;
+        script.textContent = JSON.stringify(widgetConfig);
 
-      const currentPrice = points.length ? points[points.length - 1].y : null;
-      const firstPrice = points.length ? points[0].y : null;
-      const change = currentPrice && firstPrice ? ((currentPrice - firstPrice) / firstPrice * 100) : 0;
-      const isPositive = change >= 0;
+        const widgetDiv = document.createElement('div');
+        widgetDiv.className = 'tradingview-widget-container';
+        widgetDiv.style.height = '100%';
+        widgetDiv.style.width = '100%';
 
-      document.getElementById(`price-${id}`).textContent = formatPrice(currentPrice, stock.symbol);
-      const changeEl = document.getElementById(`change-${id}`);
-      changeEl.textContent = `${isPositive ? '+' : ''}${change.toFixed(2)}%`;
-      changeEl.className = `card-change ${isPositive ? 'positive' : 'negative'}`;
+        const innerDiv = document.createElement('div');
+        innerDiv.className = 'tradingview-widget-container__widget';
+        innerDiv.style.height = '100%';
+        innerDiv.style.width = '100%';
 
-      const gradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, 250);
-      gradient.addColorStop(0, stock.color + '40');
-      gradient.addColorStop(1, stock.color + '00');
-
-      if (charts[stock.symbol]) {
-        charts[stock.symbol].data.datasets[0].data = points;
-        charts[stock.symbol].data.datasets[0].borderColor = stock.color;
-        charts[stock.symbol].data.datasets[0].backgroundColor = gradient;
-        charts[stock.symbol].update('none');
-      } else {
-        charts[stock.symbol] = new Chart(canvas, {
-          type: 'line',
-          data: {
-            datasets: [{
-              data: points,
-              borderColor: stock.color,
-              backgroundColor: gradient,
-              borderWidth: 2,
-              fill: true,
-              pointRadius: 0,
-              pointHitRadius: 10,
-              tension: 0.1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: {
-              mode: 'index',
-              intersect: false,
-              callbacks: {
-                label: ctx => formatPrice(ctx.parsed.y, stock.symbol),
-                title: ctx => new Date(ctx[0].parsed.x).toLocaleDateString('en-US', {
-                  month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                })
-              }
-            }},
-            scales: {
-              x: {
-                type: 'time',
-                grid: { color: '#21262d' },
-                ticks: { color: '#484f58', maxTicksLimit: 6, font: { size: 11 } },
-                border: { color: '#21262d' }
-              },
-              y: {
-                grid: { color: '#21262d' },
-                ticks: {
-                  color: '#484f58',
-                  font: { size: 11 },
-                  callback: v => stock.symbol === 'BTC-USD' ? '$' + (v/1000).toFixed(0) + 'k' : '$' + v.toLocaleString()
-                },
-                border: { color: '#21262d' }
-              }
-            },
-            interaction: { mode: 'index', intersect: false }
-          }
-        });
-      }
-
-      document.getElementById(`loader-${id}`).style.display = 'none';
-    }
-
-    async function loadAll() {
-      STOCKS.forEach(s => {
-        const id = CSS.escape(s.symbol);
-        const loader = document.getElementById(`loader-${id}`);
-        if (loader) loader.style.display = 'flex';
+        widgetDiv.appendChild(innerDiv);
+        widgetDiv.appendChild(script);
+        container.appendChild(widgetDiv);
       });
-
-      const results = await Promise.allSettled(
-        STOCKS.map(s => fetchData(s.symbol, currentRange, currentInterval))
-      );
-
-      results.forEach((result, i) => {
-        if (result.status === 'fulfilled') {
-          renderChart(STOCKS[i], result.value);
-        } else {
-          const id = CSS.escape(STOCKS[i].symbol);
-          document.getElementById(`loader-${id}`).innerHTML =
-            `<span style="color:#f85149">Failed to load</span>`;
-        }
-      });
-
-      document.getElementById('lastUpdated').textContent =
-        `Last updated: ${new Date().toLocaleString()}`;
     }
 
-    // Time period buttons
-    document.querySelectorAll('.time-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelector('.time-btn.active').classList.remove('active');
-        btn.classList.add('active');
-        currentRange = btn.dataset.range;
-        currentInterval = btn.dataset.interval;
-        loadAll();
-      });
+    document.getElementById('timeControls').addEventListener('click', (e) => {
+      if (!e.target.classList.contains('time-btn')) return;
+      document.querySelector('.time-btn.active').classList.remove('active');
+      e.target.classList.add('active');
+      currentRange = e.target.dataset.range;
+      renderCharts();
     });
 
-    // Init
-    createCards();
-    loadAll();
+    renderCharts();
   </script>
 </body>
 </html>
