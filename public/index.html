@@ -55,20 +55,22 @@
     .card-header {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
-      padding: 16px 20px 0;
+      align-items: center;
+      padding: 20px 20px 12px;
     }
     .card-title {
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 500;
+      color: #8b949e;
     }
     .card-price {
-      font-size: 18px;
+      font-size: 28px;
       font-weight: 700;
       color: #3fb950;
+      letter-spacing: -0.5px;
     }
     .card-subtitle {
-      padding: 2px 20px 8px;
+      padding: 0 20px 12px;
       font-size: 12px;
       color: #484f58;
     }
@@ -100,33 +102,33 @@
     <div class="card">
       <div class="card-header">
         <div class="card-title">Bitcoin / USD</div>
-        <div class="card-price" id="price-btc">--</div>
+        <div class="card-price" id="price-btc">Loading...</div>
       </div>
-      <div class="card-subtitle">BITSTAMP:BTCUSD</div>
+      <div class="card-subtitle">BTC</div>
       <div class="chart-wrap" id="chart-btc"></div>
     </div>
     <div class="card">
       <div class="card-header">
         <div class="card-title">Vanguard Total World Stock ETF</div>
-        <div class="card-price" id="price-vt">--</div>
+        <div class="card-price" id="price-vt">Loading...</div>
       </div>
-      <div class="card-subtitle">AMEX:VT</div>
+      <div class="card-subtitle">VT</div>
       <div class="chart-wrap" id="chart-vt"></div>
     </div>
     <div class="card">
       <div class="card-header">
         <div class="card-title">S&P 500</div>
-        <div class="card-price" id="price-sp500">--</div>
+        <div class="card-price" id="price-sp500">Loading...</div>
       </div>
-      <div class="card-subtitle">FOREXCOM:SPXUSD</div>
+      <div class="card-subtitle">SPX</div>
       <div class="chart-wrap" id="chart-sp500"></div>
     </div>
     <div class="card">
       <div class="card-header">
         <div class="card-title">Gold / USD</div>
-        <div class="card-price" id="price-gold">--</div>
+        <div class="card-price" id="price-gold">Loading...</div>
       </div>
-      <div class="card-subtitle">OANDA:XAUUSD</div>
+      <div class="card-subtitle">XAU</div>
       <div class="chart-wrap" id="chart-gold"></div>
     </div>
   </div>
@@ -229,10 +231,11 @@
       try {
         const res = await fetch('/api/prices');
         const data = await res.json();
-        if (data.BTC) document.getElementById('price-btc').textContent = '$' + Math.round(data.BTC).toLocaleString();
-        if (data.VT) document.getElementById('price-vt').textContent = '$' + Number(data.VT).toFixed(2);
-        if (data.SP500) document.getElementById('price-sp500').textContent = '$' + Number(data.SP500).toFixed(2);
-        if (data.GOLD) document.getElementById('price-gold').textContent = '$' + Number(data.GOLD).toFixed(2);
+        const fmt = (n, dec=2) => '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: dec, maximumFractionDigits: dec});
+        if (data.BTC) document.getElementById('price-btc').textContent = fmt(data.BTC, 0);
+        if (data.VT) document.getElementById('price-vt').textContent = fmt(data.VT);
+        if (data.SP500) document.getElementById('price-sp500').textContent = fmt(data.SP500);
+        if (data.GOLD) document.getElementById('price-gold').textContent = fmt(data.GOLD);
       } catch (e) {
         console.error('Price fetch failed:', e);
       }
