@@ -17,18 +17,12 @@ function httpGet(url) {
   });
 }
 
-async function getGooglePrice(path) {
-  const html = await httpGet(`https://www.google.com/finance/quote/${path}`);
-  const match = html.match(/data-last-price="([^"]+)"/);
-  return match ? parseFloat(match[1]) : null;
-}
-
 app.get('/api/prices', async (req, res) => {
   try {
-    const [cgData, vtPrice, spPrice] = await Promise.all([
+    const [cgData, yahooVT, yahooSP] = await Promise.all([
       httpGet('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether-gold&vs_currencies=usd'),
-      getGooglePrice('VT:NYSEARCA'),
-      getGooglePrice('.INX:INDEXSP')
+      httpGet('https://query1.finance.yahoo.com/v8/finance/chart/VT?interval=1d&range=1d'),
+      httpGet('https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1d&range=1d')
     ]);
 
     const cg = JSON.parse(cgData);
@@ -36,8 +30,16 @@ app.get('/api/prices', async (req, res) => {
 
     if (cg.bitcoin) results.BTC = cg.bitcoin.usd;
     if (cg['tether-gold']) results.GOLD = cg['tether-gold'].usd;
-    if (vtPrice) results.VT = vtPrice;
-    if (spPrice) results.SP500 = spPrice;
+
+    try {
+      const vt = JSON.parse(yahooVT);
+      results.VT = vt.chart.result[0].meta.regularMarketPrice;
+    } catch (e) {}
+
+    try {
+      const sp = JSON.parse(yahooSP);
+      results.SP500 = sp.chart.result[0].meta.regularMarketPrice;
+    } catch (e) {}
 
     res.json(results);
   } catch (err) {
