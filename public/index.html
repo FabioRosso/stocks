@@ -241,6 +241,9 @@
       }
     }
     loadPrices();
+    // Retry in case first fetch races with page load
+    setTimeout(loadPrices, 3000);
+    setTimeout(loadPrices, 8000);
   </script>
 </body>
 </html>
